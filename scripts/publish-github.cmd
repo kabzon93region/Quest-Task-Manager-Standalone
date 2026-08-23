@@ -3,119 +3,131 @@ chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 
 echo ============================================
-echo  QTaskMgr Standalone: Publish to GitHub
+echo  QTaskMgr Standalone: Публикация на GitHub
 echo ============================================
 echo.
 
-:: Read version from build.gradle.kts
+:: Читаем версию из build.gradle.kts
 set "VERSION="
 for /f "tokens=2 delims== " %%a in ('findstr /C:"versionName" "%~dp0..\src\quest-app\app\build.gradle.kts"') do (
     set "VERSION=%%~a"
 )
 set "VERSION=%VERSION:"=%"
 if "%VERSION%"=="" (
-    echo [ERROR] Cannot read versionName from build.gradle.kts
+    echo [ОШИБКА] Не удалось прочитать версию из build.gradle.kts
     pause
     exit /b 1
 )
-echo Version: %VERSION%
+echo Версия: %VERSION%
 echo.
 
-:: Check gh is available
+:: Проверяем gh CLI
 gh --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] GitHub CLI not found. Install: winget install GitHub.cli
+    echo [ОШИБКА] GitHub CLI не найден. Установите: winget install GitHub.cli
     pause
     exit /b 1
 )
 
-:: Check git status
+:: Проверяем git
 cd /d "%~dp0.."
-echo [1/5] Checking git status...
+echo [1/5] Проверка изменений...
 git status --porcelain 2>nul | findstr /r /c:"." >nul 2>&1
 if not errorlevel 1 goto :HAS_CHANGES
 
-echo No changes to commit.
+echo Изменений нет.
 echo.
-set /p CONTINUE=Continue to release only? (y/n): 
+set /p CONTINUE=Продолжить только создание релиза? (y/n): 
 if /i not "%CONTINUE%"=="y" (
-    echo Cancelled.
+    echo Отменено.
     pause
     exit /b 0
 )
 goto :RELEASE
 
 :HAS_CHANGES
-echo Changes found:
+echo Найдены изменения:
 git status --short
 echo.
 
-:: Commit
-echo [2/5] Committing changes...
+:: Коммит
+echo [2/5] Сохранение изменений...
 git add -A
 git commit -m "v%VERSION%: release"
 if errorlevel 1 (
-    echo [ERROR] Commit failed
+    echo [ОШИБКА] Не удалось создать коммит
     pause
     exit /b 1
 )
 echo.
 
 :: Push
-echo [3/5] Pushing to GitHub...
+echo [3/5] Отправка на GitHub...
 git push
 if errorlevel 1 (
-    echo [ERROR] Push failed
+    echo [ОШИБКА] Не удалось отправить на GitHub
     pause
     exit /b 1
 )
 echo.
 
 :RELEASE
-:: Check if APK exists
+:: Проверяем APK
 set "APK=%~dp0..\dist\QTaskMgr-Standalone-v%VERSION%-release.apk"
 if not exist "%APK%" (
-    echo [WARN] APK not found. Building...
+    echo [!] APK не найден. Сборка...
     powershell -ExecutionPolicy Bypass -File "%~dp0build-apk.ps1" -Release
     if errorlevel 1 (
-        echo [ERROR] Build failed
+        echo [ОШИБКА] Сборка APK не удалась
         pause
         exit /b 1
     )
 )
 if not exist "%APK%" (
-    echo [ERROR] APK not found after build
+    echo [ОШИБКА] APK не найден даже после сборки
     pause
     exit /b 1
 )
 echo APK: %APK%
 echo.
 
-:: Check if release notes exist
+:: Проверяем release notes
 set "NOTES=%~dp0..\docs\RELEASE_NOTES_v%VERSION%.md"
 if not exist "%NOTES%" (
-    echo [WARN] Release notes not found, creating...
+    echo [!] Release notes не найдены, создаю заглушку...
     echo # QTaskMgr Standalone v%VERSION%> "%NOTES%"
     echo.>> "%NOTES%"
-    echo See CHANGELOG.md for details.>> "%NOTES%"
+    echo Подробности в CHANGELOG.md.>> "%NOTES%"
 )
 
-:: Create GitHub release
-echo [4/5] Creating GitHub release v%VERSION%...
-gh release create "v%VERSION%" "%APK%" --repo kabzon93region/Quest-Task-Manager-Standalone --title "QTaskMgr Standalone v%VERSION%" --notes-file "%NOTES%"
+:: Создаём релиз на GitHub
+echo [4/5] Создание релиза v%VERSION% на GitHub...
+gh release create "v%VERSION%" "%APK%" --repo kabzon93region/Quest-Task-Manager-Standalone --title "QTaskMgr Standalone v%VERSION%" --notes-file "%NOTES%" 2>&1
 if errorlevel 1 (
-    echo [ERROR] Release creation failed
-    pause
-    exit /b 1
+    echo.
+    echo [!] Релиз v%VERSION% уже существует на GitHub.
+    echo     Обновите вручную: https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases/tag/v%VERSION%
+    set "RELEASE_OK=0"
+) else (
+    set "RELEASE_OK=1"
 )
 echo.
 
-:: Done
-echo [5/5] Done!
+:: Итог
+echo [5/5] Готово!
 echo ============================================
-echo  Published: v%VERSION%
-echo  APK: dist\QTaskMgr-Standalone-v%VERSION%-release.apk
-echo  URL: https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases/tag/v%VERSION%
+if "%RELEASE_OK%"=="1" (
+    echo  СТАТУС: ВСЁ УСПЕШНО
+    echo  - Код отправлен на GitHub
+    echo  - Релиз v%VERSION% создан
+    echo  - APK прикреплен к релизу
+) else (
+    echo  СТАТУС: ЧАСТИЧНО
+    echo  - Код отправлен на GitHub
+    echo  - Релиз v%VERSION% уже существовал
+)
+echo.
+echo  Ссылка: https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases/tag/v%VERSION%
 echo ============================================
 echo.
 pause
