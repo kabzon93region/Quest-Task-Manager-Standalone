@@ -9,7 +9,7 @@ This document lists external components, their licenses, and how they relate to 
 
 | Component | Version | License | Homepage |
 |-----------|---------|---------|----------|
-| [Shizuku](https://github.com/RikkaApps/Shizuku) API & Provider | 12.2.0 | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | https://shizuku.rikka.app/ |
+| [Kadb](https://github.com/flyfishxu/Kadb) | 2.1.1 | [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) | https://github.com/flyfishxu/Kadb |
 | AndroidX Core KTX | 1.12.0 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
 | AndroidX AppCompat | 1.6.1 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
 | Material Components for Android | 1.11.0 | Apache-2.0 | https://github.com/material-components/material-components-android |
@@ -18,7 +18,8 @@ This document lists external components, their licenses, and how they relate to 
 | AndroidX Fragment KTX | 1.6.2 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
 | AndroidX RecyclerView | 1.3.2 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
 | AndroidX Lifecycle Runtime KTX | 2.7.0 | Apache-2.0 | https://developer.android.com/jetpack/androidx |
-| Kotlin Coroutines Android | 1.7.3 | [Apache-2.0](https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt) | https://github.com/Kotlin/kotlinx.coroutines |
+| Kotlin Coroutines Android | 1.10.2 | [Apache-2.0](https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt) | https://github.com/Kotlin/kotlinx.coroutines |
+| Bouncy Castle (transitive via Kadb) | 1.83 | [MIT](https://www.bouncycastle.org/licence.html) | https://www.bouncycastle.org/ |
 
 ### Apache License 2.0 — summary
 
@@ -34,7 +35,6 @@ Full text: https://www.apache.org/licenses/LICENSE-2.0
 
 | App | Role | License (their project) | Notes |
 |-----|------|-------------------------|-------|
-| [Shizuku](https://shizuku.rikka.app/) | Privileged shell for `am force-stop`, `cmd appops`, etc. | Apache-2.0 | Required runtime dependency on device |
 | [No More Background](https://github.com/adil192/no_more_background) | — | GPL-3.0-or-later | **Not included.** QTaskMgr does not ship NMB code. Background policy uses the same public Android APIs (`appops`, `netpolicy`) documented in Android and in NMB’s README as the manual method. |
 
 ---
@@ -50,8 +50,6 @@ Full text: https://www.apache.org/licenses/LICENSE-2.0
 
 - **Meta**, **Meta Quest**, and **Horizon OS** are trademarks of Meta Platforms, Inc.
 - **Android** is a trademark of Google LLC.
-- **Shizuku** is developed by RikkaApps.
-
 This project is not affiliated with Meta, Google, or the authors of No More Background.
 
 ---
@@ -76,4 +74,4 @@ When redistributing QTaskMgr (source or APK):
 
 ---
 
-*Last updated for QTaskMgr v1.1.2*
+*Last updated for QTaskMgr Standalone v2.2.0*

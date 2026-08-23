@@ -2,6 +2,74 @@
 
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/).
 
+## [Unreleased]
+
+### Изменено
+- `.cursor/rules/DEVELOPMENT_RULES.mdc` — адаптирован под Kotlin/Android (заменены Python-правила на специфику Quest-приложения)
+
+### Удалено
+- `.cursor/rules/qest-apk-RULES.md` — правила перенесены в `DEVELOPMENT_RULES.mdc`
+
+## [2.4.0] — 2026-07-11
+
+### Добавлено
+- **ADB-уведомление с RemoteInput** — настройка pairing и подключения прямо из шторки уведомлений (как в Shizuku), без переключения с экрана Wireless debugging.
+- **Адаптивная разметка** — фильтры и кнопки закрытия сворачиваются в 2 строки в портретном режиме (FlexboxLayout). Табы прокручиваются горизонтально на узких экранах.
+
+## [2.3.0] — 2026-06-08
+
+Порт наработок **QTaskMgr v1.4.8** (основной мод на Shizuku) в standalone-линию.
+
+### Добавлено
+- `PackageListProbe`, `RunningSnapshotHolder` — списки через PM, один снимок процессов на refresh.
+- Быстрый batched shell: `ps` + awk `/proc` + `dumpsys activity activities`.
+- `UidRunningProbe` с uid-кэшем и VR-играми под оверлеем Quest.
+- Kill с верификацией (`isPackageRunning`), закрытие по UID.
+- `FileLogger.probe()` — без deadlock при shell-пробах.
+
+### Изменено
+- `RunningAppsProbe` — fast/slow режимы, `isJavaClassSegment` в `normalizePackageName`.
+- `MemoryProbe` — `buildFastRamMap`, без полного `dumpsys meminfo` при refresh.
+- `AppRepository` / фрагменты — shared snapshot, без `du` при refresh, RAM-only на «Запущенные».
+- `ShellManager` — mutex на shell, расширенный `killTarget`.
+
+### Исправлено
+- Сломанные ссылки на удалённый `ShizukuShell` в `RunningAppsProbe`.
+- Медленный refresh (множественные shell + meminfo по всем пакетам).
+
+## [2.2.0] — 2026-06-08
+
+### Добавлено
+- **ShellWatchdog**: проверка живости ADB (`id`), авто-reconnect перед kill, refresh, терминалом и фоновой очисткой.
+- Статусы shell: потеря соединения, необходимость нового debug-порта.
+
+### Изменено
+- Полное удаление Shizuku (см. 2.1.1).
+
+## [2.1.1] — 2026-06-08
+
+### Удалено
+- Зависимости и код **Shizuku** — только Wireless ADB.
+
+## [2.1.0] — 2026-06-08
+
+### Добавлено
+- **Kadb**: pair/connect к `127.0.0.1`, shell-команды через `AdbConnectionManager`.
+- **AdbKeyStore**: RSA-ключи в `filesDir/adb/`.
+- Async pair/connect в настройках; авто-connect при старте.
+- Shizuku оставался запасным каналом до 2.1.1.
+
+## [2.0.0] — 2026-06-08
+
+### Добавлено
+- **Standalone**-сборка: `com.quest3.taskmanager.standalone`, имя **QTaskMgr S** (рядом с основным QTaskMgr).
+- Абстракция **ShellBackend** / **ShellManager**; UI **Wireless ADB** (pairing + connect, протокол в v2.1).
+- Вкладка **Терминал** (shell-команды при готовом канале).
+- Shizuku — временный **запасной** бэкенд до готовности ADB.
+
+### Изменено
+- Отдельный репозиторий [Quest-Task-Manager-Standalone](https://github.com/kabzon93region/Quest-Task-Manager-Standalone).
+
 ## [1.4.1] — 2026-06-11
 
 ### Добавлено

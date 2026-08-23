@@ -1,113 +1,47 @@
-# Quest Task Manager (QTaskMgr)
+# Quest Task Manager Standalone (QTaskMgr S)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v1.4.1-blue)](https://github.com/kabzon93region/Quest-Task-Manager/releases/tag/v1.4.1)
-[![Download APK](https://img.shields.io/badge/download-APK-brightgreen)](https://github.com/kabzon93region/Quest-Task-Manager/releases/download/v1.4.1/QTaskMgr-v1.4.1-release.apk)
+[![Release](https://img.shields.io/badge/release-v2.2.0-blue)](https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases)
 [![Android](https://img.shields.io/badge/Android-10%2B%20(API%2029)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/10)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Meta Quest](https://img.shields.io/badge/Meta%20Quest-2%20%2F%203%20%2F%20Pro-0082FC?logo=meta&logoColor=white)](https://www.meta.com/quest/)
-[![Shizuku](https://img.shields.io/badge/Shizuku-required-546E7A)](https://shizuku.rikka.app/)
+[![Wireless ADB](https://img.shields.io/badge/Shell-Wireless%20ADB-546E7A)](docs/STANDALONE.md)
 
-**Диспетчер задач для Meta Quest** — просмотр и закрытие приложений, управление правами фона, очистка по уведомлению. Работает **автономно** через [Shizuku](https://shizuku.rikka.app/).
+**Диспетчер задач для Meta Quest без Shizuku** — встроенный shell через **Wireless ADB**, вкладка **Терминал**, тот же функционал kill/фон/уведомление, что у [QTaskMgr](https://github.com/kabzon93region/Quest-Task-Manager).
 
 | | |
 |---|---|
 | **Разработчик** | [kabzon93region](https://github.com/kabzon93region) |
-| **Package** | `com.quest3.taskmanager` |
-| **Версия** | 1.4.1 ([схема версий](docs/VERSIONING.md)) |
-| **GitHub** | [Quest-Task-Manager](https://github.com/kabzon93region/Quest-Task-Manager) |
-
-## Возможности
-
-| Вкладка | Описание |
-|---------|----------|
-| **Запущенные** | Процессы (ps + meminfo), RAM устройства и на карточке, фильтры Все / Пользовательские / Системные / **Демоны**, **поиск**, закрытие (все / выбранные / по правилам) |
-| **Приложения** | Список установленных apps, те же фильтры и поиск, переключатели «Фон» и «Данные» (`appops` / `netpolicy`) |
-| **Настройки** | Версия, GitHub, **DonationAlerts**, Shizuku, **Настройки Android**, уведомление очистки, лог |
-| **Лог** | Просмотр файла лога в реальном времени |
-
-## Требования
-
-- Meta Quest 2 / 3 / Pro, **Developer Mode**
-- [Shizuku](https://shizuku.rikka.app/) с разрешением для QTaskMgr
-
-**Не требуется:** No More Background, QTKiller — QTaskMgr включает свою очистку по правилам через уведомление.
-
-## Android Settings на Quest
-
-Кнопка **«Настройки Android»** и тап по приложению в списке открывают пакет `com.android.settings` (как на телефоне: Wi‑Fi, приложения, спец. возможности, режим разработчика).
-
-**На Quest этого приложения нет «из коробки»** — в системном меню Meta его не видно. Пакет `com.android.settings` обычно **попадает на шлем вместе с другой утилитой**, например при установке через SideQuest или Quest Games Optimizer. Если вы когда‑то ставили QGO, Hidden Settings или похожий APK — Android Settings, скорее всего, уже есть.
-
-Проверка: вкладка **Настройки** → **Настройки Android**. Если пакет не найден, QTaskMgr покажет диалог с ссылками (тот же текст, что ниже).
-
-### Где взять Android Settings
-
-| Вариант | Описание | Ссылка |
-|---------|----------|--------|
-| **Quest Games Optimizer (QGO)** | Часто ставят через SideQuest; в QGO есть кнопка «Open Settings» / встроенный доступ к Android Settings | [anagan79.itch.io/quest-games-optimizer](https://anagan79.itch.io/quest-games-optimizer) |
-| **XR Native Android Settings** | Отдельная обёртка под VR | [anagan79.itch.io/xr-native-android-settings](https://anagan79.itch.io/xr-native-android-settings) |
-| **Quest Hidden Settings** | Популярная обёртка от threethan | [GitHub Releases](https://github.com/threethan/QuestHiddenSettings/releases) |
-
-Установка — через SideQuest, `adb install`, Mobile VR Station или встроенный установщик в выбранной утилите. После появления `com.android.settings` кнопка в QTaskMgr начнёт работать без переустановки самого QTaskMgr.
-
-## Установка
-
-1. Скачайте APK из [Releases](https://github.com/kabzon93region/Quest-Task-Manager/releases) или [напрямую v1.4.1](https://github.com/kabzon93region/Quest-Task-Manager/releases/download/v1.4.1/QTaskMgr-v1.4.1-release.apk); либо соберите сами.
-2. Установите через SideQuest / `adb install -r`.
-3. На Quest: **Apps → Unknown Sources → Quest Task Manager**.
-4. Запустите Shizuku, выдайте разрешение QTaskMgr.
-
-```powershell
-adb install -r dist\QTaskMgr-v1.4.1-release.apk
-```
+| **Package** | `com.quest3.taskmanager.standalone` |
+| **Версия** | 2.2.0 |
+| **GitHub** | [Quest-Task-Manager-Standalone](https://github.com/kabzon93region/Quest-Task-Manager-Standalone) |
+| **Основная линия** | [Quest-Task-Manager](https://github.com/kabzon93region/Quest-Task-Manager) (Shizuku) |
 
 ## Быстрый старт
 
-1. **Shizuku** — pairing или USB, в Shizuku → Manage apps → разрешить QTaskMgr.
-2. **Приложения** — выключите «Фон» у apps, которые не должны работать в фоне.
-3. **Настройки** — включите «Фоновая очистка (уведомление)».
-4. Перед игрой — тап по уведомлению QTaskMgr → закроются apps с запрещённым фоном.
-
-Лог по умолчанию: `/sdcard/Download/QTaskManager.log` (очищается при каждом запуске из лаунчера)
+1. Developer Mode + **Wireless debugging** на Quest.
+2. Установите APK Standalone (можно **рядом** с обычным QTaskMgr).
+3. **Настройки** → Shell: pairing-код и порты → **Сопряжение** → **Подключить**.
+4. **Терминал** → `id` (должен быть `uid=2000(shell)`).
+5. После перезагрузки Quest — обновите debug-порт и нажмите **Подключить**.
 
 ## Сборка
 
 ```powershell
-.\scripts\generate-launcher-icons.ps1   # при смене иконки
-.\scripts\build-apk.ps1 -Release        # release APK → dist\
-.\scripts\build-apk.ps1                 # debug APK
+cd B:\quest3\PC\quest-task-manager-standalone
+.\scripts\build-apk.ps1 -Release
 ```
 
-Требуется: JDK 17, Android SDK, Gradle 8.2+ (или локальный из `quest-task-killer\.gradle-local`).
+APK: `dist\QTaskMgr-Standalone-v2.2.0-release.apk`
 
-## Структура проекта
+## Документация
 
-```
-quest-task-manager/
-├── LICENSE
-├── NOTICE
-├── CHANGELOG.md
-├── docs/
-│   ├── README.md
-│   ├── THIRD_PARTY.md
-│   ├── GITHUB_PUBLISH.md
-│   ├── VERSIONING.md
-│   ├── RELEASE_NOTES_v1.4.1.md   # актуальный для GitHub Releases
-│   ├── RELEASE_NOTES_v1.4.0.md   # накопительный v1.2.14 → v1.4.0
-│   └── RELEASE_NOTES_v*.md
-├── scripts/
-├── src/quest-app/          # Android Gradle project
-└── dist/                   # собранные APK (в .gitignore)
-```
+- [docs/STANDALONE.md](docs/STANDALONE.md) — ADB, архитектура, roadmap
+- [docs/RELEASE_NOTES_v2.2.0.md](docs/RELEASE_NOTES_v2.2.0.md)
 
-## Лицензия и third-party
+## Лицензия
 
-- **QTaskMgr** — [MIT](LICENSE) © kabzon93region
-- Зависимости (Shizuku, AndroidX, …) — [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md)
-- [NOTICE](NOTICE) — краткая атрибуция для дистрибутивов
-
-Управление фоновыми правами использует те же публичные API Android, что и [No More Background](https://github.com/adil192/no_more_background); код NMB **не включён** и не является частью этого проекта.
+MIT — см. [LICENSE](LICENSE).
 
 ## Поддержать проект
 
@@ -116,15 +50,3 @@ quest-task-manager/
 **[DonationAlerts → kabzon93region](https://www.donationalerts.com/r/kabzon93region)**
 
 Та же ссылка — во вкладке **Настройки** в приложении.
-
-
-## Связанные проекты
-
-| Проект | Связь |
-|--------|-------|
-| [Quest Task Killer (QTKiller)](https://github.com/kabzon93region/quest-task-killer) | Опционально; отдельный package, режим AGGRESSIVE при повторном запуске |
-| [No More Background](https://github.com/adil192/no_more_background) | Аналогичная идея; QTaskMgr — независимая реализация |
-
-## Disclaimer
-
-Не аффилирован с Meta Platforms, Inc. или Google LLC. Используйте на свой риск — закрытие системных процессов и демонов может повлиять на стабильность шлема.
