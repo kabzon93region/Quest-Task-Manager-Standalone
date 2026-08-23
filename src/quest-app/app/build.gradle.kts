@@ -16,25 +16,29 @@ android {
     }
 
     // Optional release signing: create keystore.properties (see docs/GITHUB_PUBLISH.md)
-    // signingConfigs {
-    //     create("release") {
-    //         val props = java.util.Properties()
-    //         val file = rootProject.file("keystore.properties")
-    //         if (file.exists()) {
-    //             props.load(file.inputStream())
-    //             storeFile = file(props["storeFile"] as String)
-    //             storePassword = props["storePassword"] as String
-    //             keyAlias = props["keyAlias"] as String
-    //             keyPassword = props["keyPassword"] as String
-    //         }
-    //     }
-    // }
+    signingConfigs {
+        create("release") {
+            val props = java.util.Properties()
+            val file = rootProject.file("keystore.properties")
+            if (file.exists()) {
+                props.load(file.inputStream())
+                storeFile = file(props["storeFile"] as String)
+                storePassword = props["storePassword"] as String
+                keyAlias = props["keyAlias"] as String
+                keyPassword = props["keyPassword"] as String
+            }
+        }
+    }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            // Sideload (SideQuest/adb): debug-подпись, пока нет keystore.properties
-            signingConfig = signingConfigs.getByName("debug")
+            // Use release signing if keystore.properties exists, otherwise debug
+            signingConfig = if (rootProject.file("keystore.properties").exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
