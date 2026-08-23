@@ -81,4 +81,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
     implementation("com.flyfishxu:kadb:2.1.1")
+
+    testImplementation("junit:junit:4.13.2")
 }
