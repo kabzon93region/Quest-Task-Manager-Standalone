@@ -1,7 +1,7 @@
 # Quest Task Manager Standalone (QTaskMgr S)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/release-v2.2.0-blue)](https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases)
+[![Release](https://img.shields.io/badge/release-v2.4.0-blue)](https://github.com/kabzon93region/Quest-Task-Manager-Standalone/releases)
 [![Android](https://img.shields.io/badge/Android-10%2B%20(API%2029)-3DDC84?logo=android&logoColor=white)](https://developer.android.com/about/versions/10)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Meta Quest](https://img.shields.io/badge/Meta%20Quest-2%20%2F%203%20%2F%20Pro-0082FC?logo=meta&logoColor=white)](https://www.meta.com/quest/)
@@ -13,7 +13,7 @@
 |---|---|
 | **Разработчик** | [kabzon93region](https://github.com/kabzon93region) |
 | **Package** | `com.quest3.taskmanager.standalone` |
-| **Версия** | 2.2.0 |
+| **Версия** | 2.4.0 |
 | **GitHub** | [Quest-Task-Manager-Standalone](https://github.com/kabzon93region/Quest-Task-Manager-Standalone) |
 | **Основная линия** | [Quest-Task-Manager](https://github.com/kabzon93region/Quest-Task-Manager) (Shizuku) |
 
@@ -32,12 +32,12 @@ cd B:\quest3\PC\quest-task-manager-standalone
 .\scripts\build-apk.ps1 -Release
 ```
 
-APK: `dist\QTaskMgr-Standalone-v2.2.0-release.apk`
+APK: `dist\QTaskMgr-Standalone-v2.4.0-release.apk`
 
 ## Документация
 
 - [docs/STANDALONE.md](docs/STANDALONE.md) — ADB, архитектура, roadmap
-- [docs/RELEASE_NOTES_v2.2.0.md](docs/RELEASE_NOTES_v2.2.0.md)
+- [docs/RELEASE_NOTES_v2.4.0.md](docs/RELEASE_NOTES_v2.4.0.md)
 
 ## Лицензия
 
