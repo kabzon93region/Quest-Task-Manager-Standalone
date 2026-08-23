@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,7 +20,7 @@ android {
     // Optional release signing: create keystore.properties (see docs/GITHUB_PUBLISH.md)
     signingConfigs {
         create("release") {
-            val props = java.util.Properties()
+            val props = Properties()
             val file = rootProject.file("keystore.properties")
             if (file.exists()) {
                 props.load(file.inputStream())
