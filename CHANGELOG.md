@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-08-23
+
+### Исправлено
+- Краш при запуске без ADB pairing: `PendingIntent` для RemoteInput-уведомления должен быть `FLAG_MUTABLE`, не `FLAG_IMMUTABLE`
+
 ## [2.5.0] — 2026-08-23
 
 ### Добавлено
