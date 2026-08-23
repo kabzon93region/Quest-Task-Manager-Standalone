@@ -102,7 +102,7 @@ if not exist "%NOTES%" (
 
 :: Create GitHub release
 echo [4/5] Creating GitHub release v%VERSION%...
-gh release create "v%VERSION%" "%APK%" --title "QTaskMgr Standalone v%VERSION%" --notes-file "%NOTES%"
+gh release create "v%VERSION%" "%APK%" --repo kabzon93region/Quest-Task-Manager-Standalone --title "QTaskMgr Standalone v%VERSION%" --notes-file "%NOTES%"
 if errorlevel 1 (
     echo [ERROR] Release creation failed
     pause
