@@ -13,6 +13,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
+import com.quest3.taskmanager.shell.ShellManager
+import com.quest3.taskmanager.shell.ShellWatchdog
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -55,15 +58,28 @@ class CleanupForegroundService : Service() {
     private fun runCleanup() {
         if (!isCleaning.compareAndSet(false, true)) return
 
-        if (!ShizukuShell.isAvailable() || !ShizukuShell.hasPermission()) {
-            isCleaning.set(false)
-            updateNotification(getString(R.string.notification_title), ramText(R.string.notification_shizuku_error), true)
-            return
-        }
-
-        updateNotification(getString(R.string.notification_title), ramText(R.string.notification_cleaning), true)
-
         executor.execute {
+            runBlocking { ShellWatchdog.ensureShell(applicationContext) }
+            if (!ShellManager.isReady()) {
+                mainHandler.post {
+                    isCleaning.set(false)
+                    updateNotification(
+                        getString(R.string.notification_title),
+                        ramText(R.string.notification_shell_error),
+                        true
+                    )
+                }
+                return@execute
+            }
+
+            mainHandler.post {
+                updateNotification(
+                    getString(R.string.notification_title),
+                    ramText(R.string.notification_cleaning),
+                    true
+                )
+            }
+
             var killed = 0
             try {
                 killed = RulesCleanup(applicationContext).run().killedCount
@@ -162,9 +178,9 @@ class CleanupForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "qtaskmgr_cleanup"
         const val NOTIFICATION_ID = 2001
-        const val ACTION_CLEANUP = "com.quest3.taskmanager.ACTION_CLEANUP"
-        const val ACTION_STOP = "com.quest3.taskmanager.ACTION_STOP"
-        const val ACTION_START = "com.quest3.taskmanager.ACTION_START"
+        const val ACTION_CLEANUP = "com.quest3.taskmanager.standalone.ACTION_CLEANUP"
+        const val ACTION_STOP = "com.quest3.taskmanager.standalone.ACTION_STOP"
+        const val ACTION_START = "com.quest3.taskmanager.standalone.ACTION_START"
         private const val RESULT_DISPLAY_MS = 4000L
 
         @Volatile

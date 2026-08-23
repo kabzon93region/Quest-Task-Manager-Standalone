@@ -1,5 +1,7 @@
 package com.quest3.taskmanager
 
+import com.quest3.taskmanager.shell.ShellManager
+
 object StorageProbe {
     private val outputLine = Regex("""^([a-zA-Z0-9_.]+)\s+(\d+)$""")
 
@@ -21,7 +23,7 @@ object StorageProbe {
                 [ "${'$'}total" -gt 0 ] && echo "$safe ${'$'}total"
                 """.trimIndent()
             }
-            ShizukuShell.run(script, timeoutSec = 90).combined.lines().forEach { line ->
+            ShellManager.run(script, timeoutSec = 90).combined.lines().forEach { line ->
                 val m = outputLine.find(line.trim()) ?: return@forEach
                 m.groupValues[2].toLongOrNull()?.let { kb ->
                     result[m.groupValues[1]] = kb

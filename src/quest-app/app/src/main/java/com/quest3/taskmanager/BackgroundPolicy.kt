@@ -1,5 +1,7 @@
 package com.quest3.taskmanager
 
+import com.quest3.taskmanager.shell.ShellManager
+
 /**
  * Чтение/запись прав как в [No More Background](https://github.com/adilhanney/no_more_background).
  */
@@ -8,7 +10,7 @@ object BackgroundPolicy {
 
     fun loadContext(): PolicyContext {
         val uidToPackages = mutableMapOf<Int, MutableSet<String>>()
-        ShizukuShell.run("cmd package list packages -U").combined.let { text ->
+        ShellManager.run("cmd package list packages -U").combined.let { text ->
             packageUidRegex.findAll(text).forEach { match ->
                 val pkg = match.groupValues[1]
                 val uid = match.groupValues[2].toIntOrNull() ?: return@forEach
@@ -16,10 +18,10 @@ object BackgroundPolicy {
             }
         }
         val blacklisted = parseBlacklist(
-            ShizukuShell.run("cmd netpolicy list restrict-background-blacklist").combined
+            ShellManager.run("cmd netpolicy list restrict-background-blacklist").combined
         ).toMutableSet()
         if (blacklisted.isEmpty()) {
-            val netpolicy = ShizukuShell.run("dumpsys netpolicy").combined
+            val netpolicy = ShellManager.run("dumpsys netpolicy").combined
             Regex("""UID=(\d+)\s+policy=1\s+\(REJECT_METERED_BACKGROUND\)""")
                 .findAll(netpolicy)
                 .forEach { m -> m.groupValues[1].toIntOrNull()?.let { blacklisted.add(it) } }
@@ -28,7 +30,7 @@ object BackgroundPolicy {
     }
 
     fun isRunInBackgroundBlocked(packageName: String): Boolean {
-        val text = ShizukuShell.run("cmd appops get $packageName RUN_ANY_IN_BACKGROUND").combined
+        val text = ShellManager.run("cmd appops get $packageName RUN_ANY_IN_BACKGROUND").combined
         return text.contains("ignore", ignoreCase = true) || text.contains("deny", ignoreCase = true)
     }
 
@@ -39,7 +41,7 @@ object BackgroundPolicy {
 
     fun setRunInBackgroundAllowed(packageName: String, allowed: Boolean): Boolean {
         val mode = if (allowed) "allow" else "ignore"
-        val result = ShizukuShell.run("cmd appops set $packageName RUN_ANY_IN_BACKGROUND $mode")
+        val result = ShellManager.run("cmd appops set $packageName RUN_ANY_IN_BACKGROUND $mode")
         FileLogger.i("set run-in-background $packageName -> $mode exit=${result.exitCode}")
         return result.exitCode == 0
     }
@@ -51,14 +53,14 @@ object BackgroundPolicy {
         } else {
             "cmd netpolicy add restrict-background-blacklist $uid"
         }
-        val result = ShizukuShell.run(cmd)
+        val result = ShellManager.run(cmd)
         FileLogger.i("set bg-data $packageName uid=$uid allowed=$allowed exit=${result.exitCode}")
         return result.exitCode == 0
     }
 
     private fun getUid(packageName: String, ctx: PolicyContext): Int? {
         ctx.uidToPackages.entries.firstOrNull { packageName in it.value }?.key?.let { return it }
-        val single = ShizukuShell.run("dumpsys package $packageName | grep -m1 'uid='").combined
+        val single = ShellManager.run("dumpsys package $packageName | grep -m1 'uid='").combined
         return Regex("""uid=(\d+)""").find(single)?.groupValues?.get(1)?.toIntOrNull()
     }
 

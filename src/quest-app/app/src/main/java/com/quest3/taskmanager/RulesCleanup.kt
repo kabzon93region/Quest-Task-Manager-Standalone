@@ -10,7 +10,7 @@ class RulesCleanup(private val context: Context) {
     fun run(): CleanResult {
         FileLogger.i("=== rules cleanup start ===")
         val repository = AppRepository(context)
-        val snapshot = RunningAppsProbe.collectRunningSnapshot()
+        val snapshot = RunningAppsProbe.collectRunningSnapshot(context, fast = true)
         val installed = installedPackageNames()
         val candidates = collectRunningInstalled(snapshot, installed)
 
