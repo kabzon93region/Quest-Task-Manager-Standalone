@@ -11,6 +11,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
+import com.quest3.taskmanager.shell.ShellManager
 
 fun interface LogListener {
     fun onLineAppended(line: String)
@@ -25,8 +27,9 @@ object FileLogger {
     private var enabled = true
     private var logPath = AppSettings.DEFAULT_LOG_PATH
     private var internalLogFile: File? = null
-    private var inShizukuAppend = false
+    private var inShellAppend = false
     private val listeners = CopyOnWriteArrayList<LogListener>()
+    private val externalExecutor = Executors.newSingleThreadExecutor()
 
     fun getReadableLogFile(): File? = internalLogFile
 
@@ -59,8 +62,8 @@ object FileLogger {
         if (!enabled) return
         synchronized(lock) {
             truncateInternal()
-            if (isExternalPath(logPath) && ShizukuShell.isAvailable()) {
-                truncateViaShizuku(logPath)
+            if (isExternalPath(logPath) && ShellManager.isReady()) {
+                truncateViaShell(logPath)
             } else {
                 truncateDirect(logPath)
             }
@@ -70,6 +73,18 @@ object FileLogger {
     fun i(message: String) = write("INFO", message)
     fun w(message: String) = write("WARN", message)
     fun d(message: String) = write("DEBUG", message)
+
+    /** Лог во время shell-проб: только internal + logcat, без shell append (избегаем deadlock). */
+    fun probe(message: String) {
+        Log.d(TAG, message)
+        if (!enabled) return
+        val line = "${timeFormat.format(Date())} [DEBUG] $message"
+        synchronized(lock) {
+            appendInternal(line)
+            notifyListeners(line)
+        }
+    }
+
     fun e(message: String, error: Throwable? = null) {
         val details = if (error != null) "$message | ${error.message}" else message
         write("ERROR", details)
@@ -82,16 +97,21 @@ object FileLogger {
             "DEBUG" -> Log.d(TAG, message)
             else -> Log.i(TAG, message)
         }
-        if (!enabled || inShizukuAppend) return
+        if (!enabled || inShellAppend) return
         val line = "${timeFormat.format(Date())} [$level] $message"
         synchronized(lock) {
             appendInternal(line)
-            if (isExternalPath(logPath) && ShizukuShell.isAvailable()) {
-                appendViaShizuku(line, logPath)
-            } else if (!appendDirect(line, logPath)) {
-                appendViaShizuku(line, logPath)
-            }
             notifyListeners(line)
+        }
+        externalExecutor.execute { appendExternal(line) }
+    }
+
+    private fun appendExternal(line: String) {
+        if (!enabled) return
+        if (isExternalPath(logPath) && ShellManager.isReady()) {
+            appendViaShell(line, logPath)
+        } else if (!appendDirect(line, logPath)) {
+            appendViaShell(line, logPath)
         }
     }
 
@@ -160,14 +180,14 @@ object FileLogger {
         }
     }
 
-    private fun truncateViaShizuku(path: String) {
-        if (!ShizukuShell.isAvailable() || inShizukuAppend) return
-        inShizukuAppend = true
+    private fun truncateViaShell(path: String) {
+        if (!ShellManager.isReady() || inShellAppend) return
+        inShellAppend = true
         try {
             val safe = path.replace("'", "")
-            ShizukuShell.run("truncate -s 0 '$safe'", timeoutSec = 5)
+            ShellManager.run("truncate -s 0 '$safe'", timeoutSec = 5)
         } finally {
-            inShizukuAppend = false
+            inShellAppend = false
         }
     }
 
@@ -194,15 +214,15 @@ object FileLogger {
         }
     }
 
-    private fun appendViaShizuku(line: String, path: String) {
-        if (!ShizukuShell.isAvailable() || inShizukuAppend) return
-        inShizukuAppend = true
+    private fun appendViaShell(line: String, path: String) {
+        if (!ShellManager.isReady() || inShellAppend) return
+        inShellAppend = true
         try {
             val encoded = Base64.encodeToString("$line\n".toByteArray(utf8), Base64.NO_WRAP)
             val safe = path.replace("'", "")
-            ShizukuShell.run("echo '$encoded' | base64 -d >> '$safe'", timeoutSec = 5)
+            ShellManager.run("echo '$encoded' | base64 -d >> '$safe'", timeoutSec = 5)
         } finally {
-            inShizukuAppend = false
+            inShellAppend = false
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.quest3.taskmanager
 
 import android.content.Context
+import com.quest3.taskmanager.shell.ShellManager
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Process
@@ -12,54 +13,82 @@ class AppRepository(private val context: Context) {
     private val policy = ProtectedAppsPolicy(context, context.packageName)
     private val ownPackage = context.packageName
 
-    suspend fun loadRunningEntries(): List<AppEntry> = withContext(Dispatchers.IO) {
-        requireShizuku()
-        val snapshot = RunningAppsProbe.collectRunningSnapshot()
+    suspend fun loadRunningEntries(
+        snapshot: RunningSnapshot? = null,
+        loadDisk: Boolean = false
+    ): List<AppEntry> = withContext(Dispatchers.IO) {
+        requireShell()
+        val snap = snapshot ?: RunningSnapshotHolder.getOrCollect(context, forceRefresh = true)
         val installed = installedPackageNames()
-        val packages = snapshot.displayPackages
+        val display = snap.displayPackages
+        val packages = display
             .filter { it in installed && !RunningAppsProbe.isNativeProcessName(it) }
             .toSet()
-        val daemonNames = RunningAppsProbe.collectDaemonNames(snapshot, installed)
+        val daemonNames = RunningAppsProbe.collectDaemonNames(snap, installed)
+        val runningWithRam = packages.count { (snap.ramMap.byPackage[it] ?: 0) > 0 }
+        val filteredOut = display - packages
         FileLogger.d(
-            "running filter: apps=${packages.size} daemons=${daemonNames.size}"
+            "running filter: display=${display.size} apps=${packages.size} " +
+                "filtered=${filteredOut.size} daemons=${daemonNames.size} withRam=$runningWithRam"
         )
-        val disk = StorageProbe.loadDiskSizes(packages)
+        if (filteredOut.isNotEmpty()) {
+            FileLogger.d("running filter dropped: ${filteredOut.sorted().take(15).joinToString()}")
+        }
+        if (packages.isNotEmpty()) {
+            FileLogger.d("running apps: ${packages.sorted().take(25).joinToString()}")
+        }
+        val disk = if (loadDisk) StorageProbe.loadDiskSizes(packages) else emptyMap()
         val appEntries = buildEntries(
             packageNames = packages,
-            snapshot = snapshot,
+            snapshot = snap,
             disk = disk,
             includePolicies = false,
             policyCtx = null
         )
         val daemonEntries = buildDaemonEntries(
             names = daemonNames,
-            snapshot = snapshot,
+            snapshot = snap,
             includePolicies = false,
             policyCtx = null
         )
         mergeSorted(appEntries, daemonEntries)
     }
 
-    suspend fun loadAllEntries(): List<AppEntry> = withContext(Dispatchers.IO) {
-        requireShizuku()
-        val snapshot = RunningAppsProbe.collectRunningSnapshot()
+    suspend fun loadAllEntries(
+        snapshot: RunningSnapshot? = null,
+        loadDisk: Boolean = false,
+        cachedDisk: Map<String, Long?> = emptyMap()
+    ): List<AppEntry> = withContext(Dispatchers.IO) {
+        requireShell()
+        val snap = snapshot ?: RunningSnapshotHolder.getOrCollect(context, forceRefresh = true)
         val installed = installedPackageNames()
+        val runningInSnapshot = snap.displayPackages.intersect(installed)
+        FileLogger.d(
+            "all apps: installed=${installed.size} runningInSnapshot=${runningInSnapshot.size}"
+        )
+        if (runningInSnapshot.isNotEmpty()) {
+            FileLogger.d("all apps running: ${runningInSnapshot.sorted().take(25).joinToString()}")
+        }
         val policyCtx = BackgroundPolicy.loadContext()
         val allPackages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
             .map { it.packageName }
             .toSet()
-        val daemonNames = RunningAppsProbe.collectDaemonNames(snapshot, installed)
-        val disk = StorageProbe.loadDiskSizes(allPackages)
+        val daemonNames = RunningAppsProbe.collectDaemonNames(snap, installed)
+        val disk = if (loadDisk) {
+            StorageProbe.loadDiskSizes(allPackages)
+        } else {
+            cachedDisk.mapNotNull { (pkg, kb) -> kb?.let { pkg to it } }.toMap()
+        }
         val appEntries = buildEntries(
             packageNames = allPackages,
-            snapshot = snapshot,
+            snapshot = snap,
             disk = disk,
             includePolicies = true,
             policyCtx = policyCtx
         )
         val daemonEntries = buildDaemonEntries(
             names = daemonNames,
-            snapshot = snapshot,
+            snapshot = snap,
             includePolicies = true,
             policyCtx = policyCtx
         )
@@ -70,20 +99,39 @@ class AppRepository(private val context: Context) {
         var killed = 0
         var skippedProtected = 0
         var failed = 0
+        val killedPackages = mutableListOf<String>()
         for (pkg in orderedForKill(packages)) {
             if (pkg == ownPackage) {
                 skippedProtected++
                 FileLogger.w("kill skipped (self): $pkg")
                 continue
             }
-            if (ShizukuShell.killTarget(pkg)) killed++ else failed++
+            if (policy.isKillProtected(pkg)) {
+                skippedProtected++
+                FileLogger.w("kill skipped (protected): $pkg")
+                continue
+            }
+            val uid = packageUid(pkg)
+            if (ShellManager.killTarget(pkg, uid)) {
+                killed++
+                killedPackages.add(pkg)
+            } else {
+                failed++
+            }
         }
-        KillResult(killed, skippedProtected, failed)
+        FileLogger.i("kill done: killed=$killed failed=$failed skipped=$skippedProtected")
+        KillResult(killed, skippedProtected, failed, killedPackages)
     }
 
     suspend fun killByRules(candidates: Collection<String>): KillResult = withContext(Dispatchers.IO) {
         val targets = candidates.filter {
-            it != ownPackage && BackgroundPolicy.isRunInBackgroundBlocked(it)
+            it != ownPackage &&
+                !policy.isKillProtected(it) &&
+                BackgroundPolicy.isRunInBackgroundBlocked(it)
+        }
+        FileLogger.i("kill by rules: candidates=${candidates.size} targets=${targets.size}")
+        if (targets.isNotEmpty()) {
+            FileLogger.d("kill by rules targets: ${targets.sorted().take(20).joinToString()}")
         }
         killPackages(targets)
     }
@@ -154,9 +202,9 @@ class AppRepository(private val context: Context) {
                 label = label,
                 isSystem = isSystem,
                 isDaemon = false,
-                processState = processState,
+                processState = effectiveProcessState(processState, ramKb),
                 diskSizeKb = disk[packageName],
-                ramUsageKb = if (processState != ProcessState.NONE) (ramKb ?: 0L) else null,
+                ramUsageKb = effectiveRamKb(processState, ramKb),
                 runInBackgroundAllowed = runAllowed,
                 backgroundDataAllowed = dataAllowed,
                 icon = icon
@@ -227,9 +275,9 @@ class AppRepository(private val context: Context) {
             label = packageName,
             isSystem = classifyIsSystem(packageName, null),
             isDaemon = false,
-            processState = processState,
+            processState = effectiveProcessState(processState, ramKb),
             diskSizeKb = disk[packageName],
-            ramUsageKb = if (processState != ProcessState.NONE) (ramKb ?: 0L) else null,
+            ramUsageKb = effectiveRamKb(processState, ramKb),
             runInBackgroundAllowed = null,
             backgroundDataAllowed = null,
             icon = pm.getDefaultActivityIcon()
@@ -253,13 +301,30 @@ class AppRepository(private val context: Context) {
             .map { it.packageName }
             .toSet()
 
+    private fun packageUid(packageName: String): Int? =
+        try {
+            pm.getPackageUid(packageName, 0)
+        } catch (_: PackageManager.NameNotFoundException) {
+            null
+        }
+
     private fun isSystemApp(appInfo: ApplicationInfo): Boolean =
         (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
             (appInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
 
-    private fun requireShizuku() {
-        check(ShizukuShell.isAvailable() && ShizukuShell.hasPermission()) {
-            "Shizuku unavailable"
+    private fun effectiveProcessState(state: ProcessState, ramKb: Long?): ProcessState {
+        if (state != ProcessState.NONE) return state
+        return if ((ramKb ?: 0) > 0) ProcessState.CACHED else ProcessState.NONE
+    }
+
+    private fun effectiveRamKb(state: ProcessState, ramKb: Long?): Long? {
+        val kb = ramKb ?: 0L
+        return if (state != ProcessState.NONE || kb > 0) kb else null
+    }
+
+    private fun requireShell() {
+        check(ShellManager.isReady()) {
+            "Shell not ready (configure Wireless ADB)"
         }
     }
 }

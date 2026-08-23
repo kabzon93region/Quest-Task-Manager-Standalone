@@ -17,8 +17,11 @@ import com.quest3.taskmanager.AppRepository
 import com.quest3.taskmanager.BackgroundPolicy
 import com.quest3.taskmanager.PolicyContext
 import com.quest3.taskmanager.R
-import com.quest3.taskmanager.ShizukuShell
+import com.quest3.taskmanager.shell.ShellManager
+import com.quest3.taskmanager.shell.ShellWatchdog
 import com.quest3.taskmanager.databinding.FragmentAllAppsBinding
+import com.quest3.taskmanager.FileLogger
+import com.quest3.taskmanager.RunningSnapshotHolder
 import com.quest3.taskmanager.filtered
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,6 +36,7 @@ class AllAppsFragment : Fragment() {
     private var filter = AppFilter.USER
     private var searchQuery = ""
     private var policyCtx: PolicyContext? = null
+    private var lastAutoRefreshAt = 0L
     private lateinit var loading: LoadTracker
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -71,6 +75,26 @@ class AllAppsFragment : Fragment() {
         updateFilterChips(filter)
     }
 
+    override fun onResume() {
+        super.onResume()
+        autoRefreshIfStale()
+    }
+
+    private fun autoRefreshIfStale() {
+        val now = System.currentTimeMillis()
+        if (now - lastAutoRefreshAt < 2000) return
+        lastAutoRefreshAt = now
+        lifecycleScope.launch {
+            try {
+                ShellWatchdog.ensureShell(requireContext())
+                if (!ShellManager.isReady()) return@launch
+                refreshInternal()
+            } catch (e: Exception) {
+                FileLogger.w("all apps tab auto-refresh: ${e.message}")
+            }
+        }
+    }
+
     fun setLoading(visible: Boolean) {
         if (visible) loading.begin() else loading.end()
     }
@@ -102,38 +126,61 @@ class AllAppsFragment : Fragment() {
     }
 
     fun refresh() {
-        if (!ShizukuShell.isAvailable() || !ShizukuShell.hasPermission()) {
-            Toast.makeText(requireContext(), R.string.error_shizuku, Toast.LENGTH_SHORT).show()
-            return
-        }
+        lastAutoRefreshAt = System.currentTimeMillis()
         loading.begin()
         lifecycleScope.launch {
             try {
-                val items = withContext(Dispatchers.IO) {
-                    policyCtx = BackgroundPolicy.loadContext()
-                    repository.loadAllEntries()
+                ShellWatchdog.ensureShell(requireContext())
+                if (!ShellManager.isReady()) {
+                    Toast.makeText(requireContext(), R.string.error_shell, Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
-                allItems = items
-                submitFilteredList()
-                withContext(Dispatchers.IO) {
-                    AppListCache.saveAllApps(requireContext(), items)
-                }
+                refreshInternal()
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                FileLogger.w("all apps tab refresh: ${e.message}")
             } finally {
                 loading.end()
             }
         }
     }
 
+    private suspend fun refreshInternal() {
+        val snapshot = withContext(Dispatchers.IO) {
+            RunningSnapshotHolder.getOrCollect(requireContext(), forceRefresh = true)
+        }
+        val items = withContext(Dispatchers.IO) {
+            policyCtx = BackgroundPolicy.loadContext()
+            repository.loadAllEntries(
+                snapshot,
+                loadDisk = false,
+                cachedDisk = diskFallback()
+            )
+        }
+        allItems = items
+        submitFilteredList()
+        withContext(Dispatchers.IO) {
+            AppListCache.saveAllApps(requireContext(), items)
+        }
+    }
+
+    private fun diskFallback(): Map<String, Long?> {
+        if (allItems.isNotEmpty()) {
+            return allItems.associate { it.packageName to it.diskSizeKb }
+        }
+        return AppListCache.loadAllApps(requireContext()).orEmpty()
+            .associate { it.packageName to it.diskSizeKb }
+    }
+
     private fun setRunBg(entry: AppEntry, allowed: Boolean) {
         val previous = entry.runInBackgroundAllowed
         updateLocal(entry.packageName, runAllowed = allowed, dataAllowed = null)
         lifecycleScope.launch {
+            ShellWatchdog.ensureShell(requireContext())
             val ok = BackgroundPolicy.setRunInBackgroundAllowed(entry.packageName, allowed)
             if (!ok) {
                 updateLocal(entry.packageName, runAllowed = previous, dataAllowed = null)
-                Toast.makeText(requireContext(), R.string.error_shizuku, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.error_shell, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -142,11 +189,12 @@ class AllAppsFragment : Fragment() {
         val previous = entry.backgroundDataAllowed
         updateLocal(entry.packageName, runAllowed = null, dataAllowed = allowed)
         lifecycleScope.launch {
+            ShellWatchdog.ensureShell(requireContext())
             val ctx = policyCtx ?: BackgroundPolicy.loadContext().also { policyCtx = it }
             val ok = BackgroundPolicy.setBackgroundDataAllowed(entry.packageName, allowed, ctx)
             if (!ok) {
                 updateLocal(entry.packageName, runAllowed = null, dataAllowed = previous)
-                Toast.makeText(requireContext(), R.string.error_shizuku, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.error_shell, Toast.LENGTH_SHORT).show()
             } else {
                 policyCtx = BackgroundPolicy.loadContext()
             }

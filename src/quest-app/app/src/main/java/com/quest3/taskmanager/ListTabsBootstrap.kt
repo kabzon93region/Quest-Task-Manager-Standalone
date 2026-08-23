@@ -2,6 +2,8 @@ package com.quest3.taskmanager
 
 import android.content.Context
 import android.widget.Toast
+import com.quest3.taskmanager.shell.ShellManager
+import com.quest3.taskmanager.shell.ShellWatchdog
 import com.quest3.taskmanager.ui.AllAppsFragment
 import com.quest3.taskmanager.ui.RunningTasksFragment
 import kotlinx.coroutines.Dispatchers
@@ -19,13 +21,18 @@ object ListTabsBootstrap {
         if (running == null || allApps == null) return
 
         if (AppListCache.hasCache(context)) {
-            loadFromCache(context, running, allApps)
+            coroutineScope {
+                launch { ShellWatchdog.ensureShell(context) }
+                launch { loadFromCache(context, running, allApps) }
+                launch { refreshRunningInBackground(context, running) }
+            }
             return
         }
 
-        if (!ShizukuShell.isAvailable() || !ShizukuShell.hasPermission()) {
+        ShellWatchdog.ensureShell(context)
+        if (!ShellManager.isReady()) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, R.string.error_shizuku, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.error_shell, Toast.LENGTH_SHORT).show()
             }
             return
         }
@@ -82,8 +89,13 @@ object ListTabsBootstrap {
         allApps.setLoading(true)
 
         val repo = AppRepository(context)
-        val runningDeferred = async(Dispatchers.IO) { repo.loadRunningEntries() }
-        val allDeferred = async(Dispatchers.IO) { repo.loadAllEntries() }
+        val snapshot = withContext(Dispatchers.IO) {
+            RunningSnapshotHolder.getOrCollect(context, forceRefresh = true)
+        }
+        val runningDeferred = async(Dispatchers.IO) { repo.loadRunningEntries(snapshot) }
+        val allDeferred = async(Dispatchers.IO) {
+            repo.loadAllEntries(snapshot, loadDisk = !AppListCache.hasCache(context))
+        }
 
         launch {
             try {
@@ -125,6 +137,30 @@ object ListTabsBootstrap {
                     allApps.setLoading(false)
                 }
             }
+        }
+    }
+
+    private suspend fun refreshRunningInBackground(
+        context: Context,
+        running: RunningTasksFragment
+    ) {
+        if (!ShellWatchdog.ensureShell(context) || !ShellManager.isReady()) return
+        try {
+            val snapshot = withContext(Dispatchers.IO) {
+                RunningSnapshotHolder.getOrCollect(context, forceRefresh = true)
+            }
+            val items = withContext(Dispatchers.IO) {
+                AppRepository(context).loadRunningEntries(snapshot)
+            }
+            withContext(Dispatchers.IO) {
+                AppListCache.saveRunning(context, items)
+            }
+            withContext(Dispatchers.Main) {
+                running.displayEntries(items)
+            }
+            FileLogger.i("lists: background running refresh=${items.size}")
+        } catch (e: Exception) {
+            FileLogger.w("lists: background running refresh failed: ${e.message}")
         }
     }
 }

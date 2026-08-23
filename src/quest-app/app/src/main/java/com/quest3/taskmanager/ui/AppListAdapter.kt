@@ -74,7 +74,11 @@ class AppListAdapter(
             } else {
                 ctx.getString(R.string.memory_ram, ctx.getString(R.string.memory_ram_none))
             }
-            binding.memory.text = ctx.getString(R.string.memory_line, diskText, ramText)
+            binding.memory.text = if (mode == AppListMode.RUNNING) {
+                ramText
+            } else {
+                ctx.getString(R.string.memory_line, diskText, ramText)
+            }
 
             binding.root.setOnClickListener(null)
             binding.root.isClickable = false

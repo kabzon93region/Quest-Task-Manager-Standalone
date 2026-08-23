@@ -8,17 +8,19 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <LinearLayout
+    <com.google.android.flexbox.FlexboxLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        app:flexWrap="wrap"
+        app:flexDirection="row"
+        app:alignItems="center">
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/filterChips"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            app:layout_flexGrow="1"
             app:singleSelection="true"
             app:selectionRequired="true">
 
@@ -88,42 +90,47 @@
             android:layout_height="wrap_content"
             android:text="@string/action_refresh"
             android:textColor="@color/accent_cyan" />
-    </LinearLayout>
+    </com.google.android.flexbox.FlexboxLayout>
 
-    <LinearLayout
+    <com.google.android.flexbox.FlexboxLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:orientation="horizontal">
+        app:flexWrap="wrap"
+        app:flexDirection="row"
+        app:alignItems="center">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnKillAll"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
-            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
             android:text="@string/action_kill_all"
-            app:strokeColor="@color/accent_red" />
+            app:strokeColor="@color/accent_red"
+            app:layout_flexGrow="1" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnKillSelected"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="4dp"
-            android:layout_weight="1"
-            android:text="@string/action_kill_selected" />
+            android:layout_marginBottom="4dp"
+            android:text="@string/action_kill_selected"
+            app:layout_flexGrow="1" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnKillRules"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
             android:text="@string/action_kill_rules"
-            app:strokeColor="@color/accent_cyan" />
-    </LinearLayout>
+            app:strokeColor="@color/accent_cyan"
+            app:layout_flexGrow="1" />
+    </com.google.android.flexbox.FlexboxLayout>
 
     <TextView
         android:id="@+id/statusText"
