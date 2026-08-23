@@ -38,3 +38,9 @@ __pycache__/
 
 # Standalone fork helper (lives in B:\quest3\PC\, not in this repo)
 scripts/create-standalone-fork.ps1
+
+# AI tools artifacts
+.mimocode/
+.cursor/plans/
+scripts/tmp/
+cursor_oculus_quest_3_application_manag.md
