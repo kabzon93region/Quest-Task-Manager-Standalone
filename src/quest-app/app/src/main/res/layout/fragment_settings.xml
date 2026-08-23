@@ -39,11 +39,13 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
-                <LinearLayout
+                <com.google.android.flexbox.FlexboxLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:orientation="horizontal">
+                    app:flexWrap="wrap"
+                    app:flexDirection="row"
+                    app:alignItems="center">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnGithub"
@@ -60,7 +62,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/settings_donate"
                         android:textColor="@color/accent_cyan" />
-                </LinearLayout>
+                </com.google.android.flexbox.FlexboxLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -80,26 +82,110 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/settings_shizuku_status"
+                    android:text="@string/settings_shell_title"
                     android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/shizukuStatus"
+                    android:id="@+id/shellStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:textColor="@color/text_secondary" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnOpenShizuku"
+                    android:id="@+id/btnOpenWirelessDebugging"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/settings_open_shizuku"
+                    android:text="@string/settings_open_wireless_debug"
                     app:strokeColor="@color/accent_cyan" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/settings_adb_pair_port"
+                    app:boxBackgroundColor="@color/bg_surface"
+                    app:hintTextColor="@color/text_secondary">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editPairPort"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:hint="@string/settings_adb_pair_code"
+                    app:boxBackgroundColor="@color/bg_surface"
+                    app:hintTextColor="@color/text_secondary">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editPairCode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAdbPair"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/settings_adb_pair"
+                    app:strokeColor="@color/accent_cyan" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="@string/settings_adb_debug_port"
+                    app:boxBackgroundColor="@color/bg_surface"
+                    app:hintTextColor="@color/text_secondary">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editDebugPort"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:textColor="@color/text_primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.flexbox.FlexboxLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:flexWrap="wrap"
+                    app:flexDirection="row"
+                    app:alignItems="center">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAdbConnect"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/settings_adb_connect"
+                        app:strokeColor="@color/accent_cyan" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAdbDisconnect"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_adb_disconnect"
+                        android:textColor="@color/text_secondary" />
+                </com.google.android.flexbox.FlexboxLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

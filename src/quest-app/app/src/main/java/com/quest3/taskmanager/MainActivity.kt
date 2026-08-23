@@ -12,23 +12,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
 import com.quest3.taskmanager.databinding.ActivityMainBinding
-import kotlinx.coroutines.launch
+import com.quest3.taskmanager.shell.ShellWatchdog
 import com.quest3.taskmanager.ui.AllAppsFragment
-import com.quest3.taskmanager.ui.RunningTasksFragment
 import com.quest3.taskmanager.ui.LogFragment
+import com.quest3.taskmanager.ui.RunningTasksFragment
 import com.quest3.taskmanager.ui.SettingsFragment
-import rikka.shizuku.Shizuku
+import com.quest3.taskmanager.ui.TerminalFragment
+import com.quest3.taskmanager.shell.AdbSetupNotification
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-
-    private val permissionListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-        if (grantResult == PackageManager.PERMISSION_GRANTED) {
-            FileLogger.i("Shizuku permission granted")
-        } else {
-            FileLogger.w("Shizuku permission denied")
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,17 +30,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         FileLogger.onAppLaunch(this)
+        AdbSetupNotification.createChannels(this)
 
         setSupportActionBar(binding.toolbar)
 
-        binding.viewPager.offscreenPageLimit = 1
+        binding.viewPager.offscreenPageLimit = 2
         binding.viewPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount() = 4
+            override fun getItemCount() = 5
             override fun createFragment(position: Int): Fragment = when (position) {
                 0 -> RunningTasksFragment()
                 1 -> AllAppsFragment()
-                2 -> SettingsFragment()
-                3 -> LogFragment()
+                2 -> TerminalFragment()
+                3 -> SettingsFragment()
+                4 -> LogFragment()
                 else -> LogFragment()
             }
         }
@@ -55,16 +51,17 @@ class MainActivity : AppCompatActivity() {
             tab.text = when (position) {
                 0 -> getString(R.string.tab_running)
                 1 -> getString(R.string.tab_apps)
-                2 -> getString(R.string.tab_settings)
-                3 -> getString(R.string.tab_log)
+                2 -> getString(R.string.tab_terminal)
+                3 -> getString(R.string.tab_settings)
+                4 -> getString(R.string.tab_log)
                 else -> getString(R.string.tab_log)
             }
         }.attach()
 
         binding.viewPager.post { bootstrapListTabs() }
 
-        Shizuku.addRequestPermissionResultListener(permissionListener)
-        requestShizukuIfNeeded()
+        lifecycleScope.launch { ShellWatchdog.ensureShell(this@MainActivity) }
+
         ensureNotificationPermissionIfNeeded()
         AppSettings.syncNotificationService(this)
     }
@@ -72,6 +69,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         AppSettings.syncNotificationService(this)
+        lifecycleScope.launch { ShellWatchdog.ensureShell(this@MainActivity) }
     }
 
     override fun onRequestPermissionsResult(
@@ -102,12 +100,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestShizukuIfNeeded() {
-        if (Shizuku.pingBinder() && Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-            Shizuku.requestPermission(0)
-        }
-    }
-
     private fun bootstrapListTabs() {
         lifecycleScope.launch {
             ListTabsBootstrap.bootstrap(
@@ -116,11 +108,6 @@ class MainActivity : AppCompatActivity() {
                 allApps = supportFragmentManager.findFragmentByTag("f1") as? AllAppsFragment
             )
         }
-    }
-
-    override fun onDestroy() {
-        Shizuku.removeRequestPermissionResultListener(permissionListener)
-        super.onDestroy()
     }
 
     companion object {

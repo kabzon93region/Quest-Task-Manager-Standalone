@@ -6,21 +6,27 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.quest3.taskmanager.AndroidSettingsLauncher
 import com.quest3.taskmanager.AppSettings
 import com.quest3.taskmanager.BuildConfig
 import com.quest3.taskmanager.CleanupForegroundService
 import com.quest3.taskmanager.FileLogger
 import com.quest3.taskmanager.R
-import com.quest3.taskmanager.ShizukuShell
 import com.quest3.taskmanager.databinding.FragmentSettingsBinding
+import com.quest3.taskmanager.shell.AdbShellBackend
+import com.quest3.taskmanager.shell.ShellManager
+import com.quest3.taskmanager.shell.ShellWatchdog
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
@@ -34,17 +40,21 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val prefs = AppSettings.prefs(requireContext())
+        val ctx = requireContext()
 
-        binding.switchNotification.isChecked = AppSettings.isNotificationEnabled(requireContext())
+        binding.switchNotification.isChecked = AppSettings.isNotificationEnabled(ctx)
         binding.switchLogging.isChecked = prefs.getBoolean(AppSettings.KEY_LOGGING, true)
         binding.editLogPath.setText(
             prefs.getString(AppSettings.KEY_LOG_PATH, AppSettings.DEFAULT_LOG_PATH)
         )
 
+        binding.editPairPort.setText(AdbShellBackend.getPairPort(ctx))
+        binding.editDebugPort.setText(AdbShellBackend.getDebugPort(ctx))
+
         binding.switchNotification.setOnCheckedChangeListener { _, checked ->
             if (checked) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED
                 ) {
                     ActivityCompat.requestPermissions(
@@ -57,7 +67,7 @@ class SettingsFragment : Fragment() {
             } else {
                 prefs.edit().putBoolean(AppSettings.KEY_NOTIFICATION, false).apply()
             }
-            AppSettings.syncNotificationService(requireContext())
+            AppSettings.syncNotificationService(ctx)
         }
 
         binding.switchLogging.setOnCheckedChangeListener { _, checked ->
@@ -73,33 +83,99 @@ class SettingsFragment : Fragment() {
             }
         }
 
-        binding.btnOpenShizuku.setOnClickListener {
-            val intent = requireContext().packageManager
-                .getLaunchIntentForPackage("moe.shizuku.privileged.api")
-            if (intent != null) startActivity(intent)
+        binding.editPairPort.doAfterTextChanged {
+            val port = it?.toString().orEmpty()
+            AdbShellBackend.savePairing(ctx, port, binding.editPairCode.text?.toString().orEmpty())
+            if (port.isBlank()) {
+                AppSettings.prefs(ctx).edit().putBoolean(AppSettings.KEY_ADB_PAIRED, false).apply()
+            }
+        }
+        binding.editPairCode.doAfterTextChanged {
+            AdbShellBackend.savePairing(ctx, binding.editPairPort.text?.toString().orEmpty(), it?.toString().orEmpty())
+        }
+        binding.editDebugPort.doAfterTextChanged {
+            AdbShellBackend.saveDebugPort(ctx, it?.toString().orEmpty())
+        }
+
+        binding.btnOpenWirelessDebugging.setOnClickListener { openWirelessDebugging() }
+        binding.btnAdbPair.setOnClickListener {
+            runAdbAction {
+                val (ok, msg) = AdbShellBackend.pair(ctx)
+                toast(msg)
+                if (ok) updateShellStatus()
+            }
+        }
+        binding.btnAdbConnect.setOnClickListener {
+            runAdbAction {
+                val (_, msg) = AdbShellBackend.connect(ctx)
+                toast(msg)
+                updateShellStatus()
+            }
+        }
+        binding.btnAdbDisconnect.setOnClickListener {
+            runAdbAction {
+                AdbShellBackend.disconnect()
+                toast(getString(R.string.settings_adb_disconnected))
+                updateShellStatus()
+            }
         }
 
         binding.btnOpenAndroidSettings.setOnClickListener { openAndroidSettings() }
-
         binding.appVersion.text = getString(R.string.settings_version, BuildConfig.VERSION_NAME)
         binding.btnGithub.setOnClickListener { openUrl(R.string.settings_github_url) }
         binding.btnDonate.setOnClickListener { openUrl(R.string.settings_donationalerts_url) }
 
-        updateShizukuStatus()
+        updateShellStatus()
     }
 
     override fun onResume() {
         super.onResume()
-        updateShizukuStatus()
         binding.switchNotification.isChecked = AppSettings.isNotificationEnabled(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch {
+            ShellWatchdog.ensureShell(requireContext())
+            updateShellStatus()
+        }
     }
 
-    private fun updateShizukuStatus() {
-        binding.shizukuStatus.text = when {
-            !ShizukuShell.isAvailable() -> getString(R.string.shizuku_down)
-            !ShizukuShell.hasPermission() -> getString(R.string.shizuku_no_perm)
-            else -> getString(R.string.shizuku_ok)
+    private fun updateShellStatus() {
+        binding.shellStatus.text = ShellManager.statusMessage(requireContext())
+    }
+
+    private fun runAdbAction(block: suspend () -> Unit) {
+        setAdbBusy(true)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                block()
+            } finally {
+                setAdbBusy(false)
+            }
         }
+    }
+
+    private fun setAdbBusy(busy: Boolean) {
+        binding.btnAdbPair.isEnabled = !busy
+        binding.btnAdbConnect.isEnabled = !busy
+        binding.btnAdbDisconnect.isEnabled = !busy
+        if (busy) {
+            binding.shellStatus.text = getString(R.string.settings_adb_busy)
+        } else {
+            updateShellStatus()
+        }
+    }
+
+    private fun openWirelessDebugging() {
+        val intents = listOf(
+            Intent("android.settings.APPLICATION_DEVELOPMENT_SETTINGS"),
+            Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+        )
+        for (intent in intents) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (intent.resolveActivity(requireContext().packageManager) != null) {
+                startActivity(intent)
+                return
+            }
+        }
+        AndroidSettingsLauncher.openMainWithUi(requireContext())
     }
 
     private fun openAndroidSettings() {
@@ -108,6 +184,10 @@ class SettingsFragment : Fragment() {
 
     private fun openUrl(urlResId: Int) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(urlResId))))
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroyView() {

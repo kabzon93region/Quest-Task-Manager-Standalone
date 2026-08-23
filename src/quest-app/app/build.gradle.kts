@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.quest3.taskmanager"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.quest3.taskmanager"
+        applicationId = "com.quest3.taskmanager.standalone"
         minSdk = 29
         targetSdk = 34
-        versionCode = 10401
-        versionName = "1.4.1"
+        versionCode = 20400
+        versionName = "2.4.0"
     }
 
     // Optional release signing: create keystore.properties (see docs/GITHUB_PUBLISH.md)
@@ -47,13 +47,21 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     buildFeatures {
         viewBinding = true
         buildConfig = true
+    }
+
+    packaging {
+        resources {
+            pickFirsts += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        }
     }
 }
 
@@ -66,7 +74,7 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("dev.rikka.shizuku:api:12.2.0")
-    implementation("dev.rikka.shizuku:provider:12.2.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("com.flyfishxu:kadb:2.1.1")
 }

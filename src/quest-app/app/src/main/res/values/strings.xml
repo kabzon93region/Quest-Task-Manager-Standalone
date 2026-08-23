@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Quest Task Manager</string>
-    <string name="app_name_short">QTaskMgr</string>
+    <string name="app_name">Quest Task Manager Standalone</string>
+    <string name="app_name_short">QTaskMgr S</string>
     <string name="tab_running">Запущенные</string>
     <string name="tab_apps">Приложения</string>
+    <string name="tab_terminal">Терминал</string>
     <string name="tab_settings">Настройки</string>
     <string name="tab_log">Лог</string>
     <string name="log_empty">Лог пуст или логирование отключено</string>
@@ -32,19 +33,41 @@
     <string name="policy_allowed">разрешено</string>
     <string name="policy_blocked">запрещено</string>
 
-    <string name="shizuku_ok">Shizuku: подключён</string>
-    <string name="shizuku_no_perm">Shizuku: нет разрешения</string>
-    <string name="shizuku_down">Shizuku: не запущен</string>
+    <string name="settings_shell_title">Shell (Wireless ADB)</string>
+    <string name="settings_open_wireless_debug">Параметры разработчика</string>
+    <string name="settings_adb_pair_port">Порт pairing</string>
+    <string name="settings_adb_pair_code">Код pairing (6 цифр)</string>
+    <string name="settings_adb_debug_port">Порт подключения (debug)</string>
+    <string name="settings_adb_pair">Сопряжение</string>
+    <string name="settings_adb_connect">Подключить</string>
+    <string name="settings_adb_disconnect">Отключить</string>
+    <string name="settings_adb_disconnected">ADB отключён</string>
+    <string name="settings_adb_busy">Подключение…</string>
+    <string name="adb_error_pair_port">Укажите порт pairing</string>
+    <string name="adb_error_pair_code">Укажите код pairing (6 цифр)</string>
+    <string name="adb_error_debug_port">Укажите порт подключения (debug) из Wireless debugging</string>
+    <string name="adb_error_connection_refused">Отказ в подключении — включите Wireless debugging и проверьте debug-порт</string>
+    <string name="adb_error_timeout">Таймаут — код pairing мог истечь, запросите новый</string>
+    <string name="adb_error_pair_failed">Сопряжение не удалось — проверьте код и порт pairing</string>
+    <string name="adb_pair_ok">Сопряжение выполнено</string>
+    <string name="adb_connect_ok">Подключено: %1$s</string>
+    <string name="shell_status_adb_ok">Shell: Wireless ADB</string>
+    <string name="shell_status_adb_need_connect">ADB: сопряжено, нажмите «Подключить»</string>
+    <string name="shell_status_adb_reconnecting">ADB: переподключение…</string>
+    <string name="shell_status_adb_lost">ADB: соединение потеряно — проверьте debug-порт</string>
+    <string name="shell_status_adb_debug_off">ADB: Wireless debugging выключен</string>
+    <string name="shell_status_need_setup">Shell: настройте ADB во вкладке «Настройки»</string>
+    <string name="terminal_input_hint">команда</string>
+    <string name="terminal_send">Выполнить</string>
+    <string name="terminal_welcome">встроенный shell (настройте Wireless ADB)</string>
 
     <string name="settings_logging">Логирование</string>
     <string name="settings_log_path">Путь к логу</string>
     <string name="settings_version">Версия %1$s</string>
     <string name="settings_github">Страница на GitHub</string>
-    <string name="settings_github_url">https://github.com/kabzon93region/quest-task-manager</string>
+    <string name="settings_github_url">https://github.com/kabzon93region/Quest-Task-Manager-Standalone</string>
     <string name="settings_donate">Поддержать (DonationAlerts)</string>
     <string name="settings_donationalerts_url">https://www.donationalerts.com/r/kabzon93region</string>
-    <string name="settings_shizuku_status">Статус Shizuku</string>
-    <string name="settings_open_shizuku">Открыть Shizuku</string>
     <string name="settings_open_android">Настройки Android</string>
     <string name="settings_android_hint">Специальные возможности, разрешения, параметры разработчика (ADB)</string>
     <string name="settings_android_missing_title">Android Settings не установлены</string>
@@ -52,7 +75,7 @@
     <string name="settings_android_launch_failed">Не удалось открыть Android Settings</string>
     <string name="settings_android_launch_failed_hint">Пакет com.android.settings найден, но главный экран недоступен. Установите обёртку из раздела README (QGO, XR Native, Hidden Settings).</string>
     <string name="settings_instructions_title">Инструкция</string>
-    <string name="settings_instructions">1. Включите Developer Mode на Quest.\n2. Установите и запустите Shizuku (pairing или USB).\n3. В Shizuku → Manage apps → разрешите Quest Task Manager.\n4. Вкладка «Запущенные» — закрытие процессов.\n5. Вкладка «Приложения» — права фона и интернета.\n6. Включите «Фоновая очистка» — тап по уведомлению закрывает apps с запрещённым фоном.\n\nЛицензия: MIT. Сторонние компоненты — см. README на GitHub.</string>
+    <string name="settings_instructions">1. Developer Mode и Wireless debugging на Quest.\n2. Настройки → Shell: pairing (код + порт), затем подключение (debug port).\n3. Вкладка «Терминал» — проверка: id (uid=2000).\n4. «Запущенные» / «Приложения» — как в QTaskMgr.\n5. После перезагрузки Quest — только «Подключить» (при смене порта введите новый).\n\nЛицензия: MIT.</string>
 
     <string name="killed_count">Закрыто: %1$d</string>
     <string name="killed_with_skipped">Закрыто: %1$d, защищённые: %2$d</string>
@@ -60,17 +83,32 @@
     <string name="killed_with_failed">Закрыто: %1$d, не удалось: %2$d</string>
     <string name="killed_mixed">Закрыто: %1$d, защищённые: %2$d, не удалось: %3$d</string>
     <string name="loading">Загрузка…</string>
-    <string name="error_shizuku">Нужен Shizuku</string>
+    <string name="error_shell">Shell не готов — настройте Wireless ADB</string>
     <string name="selected_count">Выбрано: %1$d</string>
 
     <string name="settings_notification">Фоновая очистка (уведомление)</string>
-    <string name="notification_channel_name">QTaskMgr</string>
+    <string name="notification_channel_name">QTaskMgr S</string>
     <string name="notification_channel_desc">Очистка apps с запрещённым фоном</string>
-    <string name="notification_title">QTaskMgr</string>
+    <string name="notification_title">QTaskMgr S</string>
     <string name="notification_idle">%1$s • тап</string>
     <string name="notification_idle_with_last">%1$s • −%2$d</string>
     <string name="notification_cleaning">%1$s • …</string>
     <string name="notification_result_closed">%1$s • %2$s</string>
     <string name="notification_result_none">%1$s • ок</string>
-    <string name="notification_shizuku_error">%1$s • Shizuku?</string>
+    <string name="notification_shell_error">%1$s • Shell?</string>
+
+    <string name="adb_notif_channel_name">Настройка ADB</string>
+    <string name="adb_notif_channel_desc">Подключение к Wireless ADB</string>
+    <string name="adb_notif_pair_title">QTaskMgr S: Настройка ADB</string>
+    <string name="adb_notif_pair_text">Введите порт и код pairing из Wireless debugging</string>
+    <string name="adb_notif_pair_action">Pair</string>
+    <string name="adb_notif_pair_hint">порт код</string>
+    <string name="adb_notif_connect_title">QTaskMgr S: Готов к подключению</string>
+    <string name="adb_notif_connect_text">Введите debug-порт из Wireless debugging</string>
+    <string name="adb_notif_connect_action">Подключить</string>
+    <string name="adb_notif_connect_hint">debug-порт</string>
+    <string name="adb_notif_pair_success">Сопряжение выполнено — введите debug-порт</string>
+    <string name="adb_notif_connect_success">Подключено: %1$s</string>
+    <string name="adb_notif_pair_error">Сопряжение не удалось: %1$s</string>
+    <string name="adb_notif_connect_error">Подключение не удалось: %1$s</string>
 </resources>

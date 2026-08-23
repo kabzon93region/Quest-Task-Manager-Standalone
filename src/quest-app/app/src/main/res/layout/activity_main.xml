@@ -21,7 +21,9 @@
         android:background="@color/bg_surface"
         app:tabIndicatorColor="@color/accent_cyan"
         app:tabSelectedTextColor="@color/accent_cyan"
-        app:tabTextColor="@color/text_secondary" />
+        app:tabTextColor="@color/text_secondary"
+        app:tabMode="scrollable"
+        app:tabGravity="start" />
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
