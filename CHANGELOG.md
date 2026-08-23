@@ -4,8 +4,16 @@
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-08-23
+
+### Добавлено
+- **Авто-обнаружение debug-порта** — кнопка «Авто» в настройках использует NsdManager (mDNS) и fallback на `/proc/net/tcp` через shell
+- **Release-подпись** — автоматическое использование `keystore.properties` если файл существует, иначе debug-подпись
+- **Unit-тесты** — тесты для `normalizePackageName` и `isLikelyPackageName`
+
 ### Изменено
 - `.cursor/rules/DEVELOPMENT_RULES.mdc` — адаптирован под Kotlin/Android (заменены Python-правила на специфику Quest-приложения)
+- Документация: версии обновлены до актуальных в README, STANDALONE, VERSIONING, GITHUB_PUBLISH
 
 ### Удалено
 - `.cursor/rules/qest-apk-RULES.md` — правила перенесены в `DEVELOPMENT_RULES.mdc`
