@@ -27,6 +27,7 @@ import com.quest3.taskmanager.databinding.FragmentSettingsBinding
 import com.quest3.taskmanager.shell.AdbShellBackend
 import com.quest3.taskmanager.shell.ShellManager
 import com.quest3.taskmanager.shell.ShellWatchdog
+import com.quest3.taskmanager.shell.adb.PortDiscovery
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
@@ -119,6 +120,19 @@ class SettingsFragment : Fragment() {
                 updateShellStatus()
             }
         }
+        binding.btnAdbAutoPort.setOnClickListener {
+            runAdbAction {
+                binding.shellStatus.text = getString(R.string.settings_adb_discovering)
+                val port = PortDiscovery.discover(ctx)
+                if (port != null) {
+                    binding.editDebugPort.setText(port.toString())
+                    toast(getString(R.string.settings_adb_discover_ok, port))
+                } else {
+                    toast(getString(R.string.settings_adb_discover_fail))
+                }
+                updateShellStatus()
+            }
+        }
 
         binding.btnOpenAndroidSettings.setOnClickListener { openAndroidSettings() }
         binding.appVersion.text = getString(R.string.settings_version, BuildConfig.VERSION_NAME)
@@ -156,6 +170,7 @@ class SettingsFragment : Fragment() {
         binding.btnAdbPair.isEnabled = !busy
         binding.btnAdbConnect.isEnabled = !busy
         binding.btnAdbDisconnect.isEnabled = !busy
+        binding.btnAdbAutoPort.isEnabled = !busy
         if (busy) {
             binding.shellStatus.text = getString(R.string.settings_adb_busy)
         } else {

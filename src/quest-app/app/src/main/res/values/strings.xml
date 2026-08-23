@@ -43,6 +43,10 @@
     <string name="settings_adb_disconnect">Отключить</string>
     <string name="settings_adb_disconnected">ADB отключён</string>
     <string name="settings_adb_busy">Подключение…</string>
+    <string name="settings_adb_auto_port">Авто</string>
+    <string name="settings_adb_discovering">Поиск порта…</string>
+    <string name="settings_adb_discover_ok">Найден порт: %1$d</string>
+    <string name="settings_adb_discover_fail">Порт не найден — введите вручную</string>
     <string name="adb_error_pair_port">Укажите порт pairing</string>
     <string name="adb_error_pair_code">Укажите код pairing (6 цифр)</string>
     <string name="adb_error_debug_port">Укажите порт подключения (debug) из Wireless debugging</string>
