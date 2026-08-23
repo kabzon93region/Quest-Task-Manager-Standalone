@@ -10,7 +10,7 @@
 | Лаунчер | QTaskMgr | QTaskMgr S |
 | Shell | Shizuku APK | Wireless ADB (Kadb) |
 | Терминал | Нет | Вкладка «Терминал» |
-| Версия (актуальная) | **1.4.8** | **2.5.0** |
+| Версия (актуальная) | **1.4.8** | **2.5.5** |
 
 Оба приложения можно установить **одновременно**.
 
@@ -37,6 +37,10 @@
 | **2.3.0** | Паритет с QTaskMgr 1.4.8: VR-детекция, быстрый refresh, kill |
 | **2.4.0** | ADB-уведомление с RemoteInput, адаптивная разметка |
 | **2.5.0** | mDNS авто-обнаружение порта, release-подпись, unit-тесты |
+| **2.5.2** | mDNS auto-discovery debug-порта (заменён на probe в 2.5.3) |
+| **2.5.3** | Probe debug-порта после pairing (pairing port + neighbors), mDNS fallback, UX-подсказка |
+| **2.5.4** | IPv6 loopback (::1), улучшенный статус-бар, детальное логирование |
+| **2.5.5** | Убран mDNS из auto-discovery, уточнён kill_protected, скрипт publish-github.cmd |
 
 ## Настройка Wireless ADB
 

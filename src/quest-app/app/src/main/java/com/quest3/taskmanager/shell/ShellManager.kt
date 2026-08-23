@@ -128,10 +128,14 @@ object ShellManager {
         }
         if (ShellWatchdog.lastReconnectFailed) {
             val err = ShellWatchdog.lastError().orEmpty()
-            return if (isDebugOffError(err)) {
-                context.getString(R.string.shell_status_adb_debug_off)
-            } else {
-                context.getString(R.string.shell_status_adb_lost)
+            return when {
+                err.contains("not paired", ignoreCase = true) ->
+                    context.getString(R.string.shell_status_need_setup)
+                err.contains("debug port missing", ignoreCase = true) ->
+                    context.getString(R.string.shell_status_adb_need_connect)
+                err.contains("Connection refused", ignoreCase = true) ->
+                    context.getString(R.string.shell_status_adb_lost)
+                else -> context.getString(R.string.shell_status_adb_lost)
             }
         }
         if (AdbShellBackend.isPaired(context)) {
@@ -140,8 +144,4 @@ object ShellManager {
         return context.getString(R.string.shell_status_need_setup)
     }
 
-    private fun isDebugOffError(message: String): Boolean =
-        message.contains("Connection refused", ignoreCase = true) ||
-            message.contains("Wireless debugging", ignoreCase = true) ||
-            message.contains("debug port", ignoreCase = true)
 }

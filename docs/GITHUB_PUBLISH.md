@@ -73,6 +73,14 @@ Release подписывается debug-ключом (для SideQuest/adb). Б
 gh release create v2.5.0 dist\QTaskMgr-Standalone-v2.5.0-release.apk --title "QTaskMgr Standalone v2.5.0" --notes-file docs\RELEASE_NOTES_v2.5.0.md
 ```
 
+### Автоматическая публикация (скрипт)
+
+```cmd
+scripts\publish-github.cmd
+```
+
+Скрипт автоматически: читает версию из `build.gradle.kts`, коммитит изменения, пушит, собирает APK (если нужно), создаёт GitHub Release с APK и release notes.
+
 ---
 
 ## Часть 4. Переход в Public (когда готовы)

@@ -25,22 +25,59 @@ object PortDiscovery {
      * Returns the port number or null if discovery fails.
      */
     suspend fun discover(context: Context): Int? {
-        // Try mDNS first
-        val mdnsPort = discoverViaMdns(context)
-        if (mdnsPort != null) {
-            FileLogger.i("port discovered via mDNS: $mdnsPort")
-            return mdnsPort
+        // Try /proc/net/tcp directly (may not work on Android 10+ due to SELinux)
+        val procPort = discoverFromProcFs()
+        if (procPort != null) {
+            FileLogger.i("port discovered via /proc/net/tcp: $procPort")
+            return procPort
         }
 
-        // Fallback: try shell-based discovery (if already connected)
+        // Fallback: shell-based discovery (if already connected)
         val shellPort = discoverViaShell()
         if (shellPort != null) {
             FileLogger.i("port discovered via shell: $shellPort")
             return shellPort
         }
 
+        // mDNS disabled — on Quest it returns 5555 (wrong port)
+        // val mdnsPort = discoverViaMdns(context)
+
         FileLogger.w("port discovery failed")
         return null
+    }
+
+    /**
+     * Read /proc/net/tcp and /proc/net/tcp6 directly from the app process.
+     * Find listening ports owned by UID 2000 (shell/adbd).
+     * Works because the app runs on the same device as adbd.
+     */
+    internal suspend fun discoverFromProcFs(): Int? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val ports = mutableSetOf<Int>()
+                for (path in listOf("/proc/net/tcp", "/proc/net/tcp6")) {
+                    val file = java.io.File(path)
+                    if (!file.canRead()) continue
+                    for (line in file.readLines()) {
+                        val parts = line.trim().split("\\s+".toRegex())
+                        if (parts.size < 10) continue
+                        val localAddress = parts[1]
+                        val state = parts[3]
+                        val uid = parts.getOrNull(9)?.toIntOrNull() ?: continue
+                        // State 0A = LISTEN, UID 2000 = shell (adbd)
+                        if (state == "0A" && uid == 2000) {
+                            val portHex = localAddress.substringAfter(":")
+                            val port = portHex.toIntOrNull(16) ?: continue
+                            if (port > 0) ports.add(port)
+                        }
+                    }
+                }
+                ports.firstOrNull()
+            } catch (e: Exception) {
+                FileLogger.w("procfs port discovery failed: ${e.message}")
+                null
+            }
+        }
     }
 
     /**

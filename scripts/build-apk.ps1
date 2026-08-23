@@ -13,7 +13,7 @@ if (-not $env:JAVA_HOME) {
 $env:ANDROID_HOME = $sdkRoot
 if ($env:JAVA_HOME) { $env:Path = "$env:JAVA_HOME\bin;$sdkRoot\platform-tools;$env:Path" }
 
-$versionName = "2.5.1"
+$versionName = "2.5.5"
 $gradle = Join-Path $project "gradlew.bat"
 
 if ($Release) {

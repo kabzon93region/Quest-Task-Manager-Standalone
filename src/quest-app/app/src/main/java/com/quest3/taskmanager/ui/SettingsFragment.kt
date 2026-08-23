@@ -102,8 +102,24 @@ class SettingsFragment : Fragment() {
         binding.btnAdbPair.setOnClickListener {
             runAdbAction {
                 val (ok, msg) = AdbShellBackend.pair(ctx)
-                toast(msg)
-                if (ok) updateShellStatus()
+                if (ok) {
+                    val prefs = AppSettings.prefs(ctx)
+                    val probedPort = prefs.getString(AppSettings.KEY_ADB_DEBUG_PORT, "").orEmpty()
+                    if (probedPort.isNotEmpty()) {
+                        binding.editDebugPort.setText(probedPort)
+                        toast(getString(R.string.settings_adb_discover_ok, probedPort.toInt()))
+                        val (_, connectMsg) = AdbShellBackend.connect(ctx)
+                        toast(connectMsg)
+                    } else {
+                        // Probe failed — user must enter debug port manually
+                        toast(getString(R.string.adb_pair_ok))
+                        binding.editDebugPort.text?.clear()
+                        binding.editDebugPort.requestFocus()
+                    }
+                } else {
+                    toast(msg)
+                }
+                updateShellStatus()
             }
         }
         binding.btnAdbConnect.setOnClickListener {

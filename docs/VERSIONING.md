@@ -66,9 +66,9 @@
 |---|--------|--------|
 | 1 | 1.4.1 | DonationAlerts в настройках и README |
 
-**Текущая версия: `2.4.0`** · опубликована на GitHub: **v2.4.0**
+**Текущая версия: `2.5.5`** · опубликована на GitHub: **v2.5.5**
 
-Следующий фикс → **2.4.1**. Новая функция → **2.5.0**.
+Следующий фикс → **2.5.6**. Новая функция → **2.6.0**.
 
 ---
 
@@ -86,9 +86,15 @@ Standalone-сборка: `com.quest3.taskmanager.standalone`, имя **QTaskMgr 
 | 2 | 2.2.0 | ShellWatchdog, auto-reconnect |
 | 3 | 2.3.0 | Паритет с QTaskMgr 1.4.8: VR-детекция, быстрый refresh, kill |
 | 4 | 2.4.0 | ADB-уведомление с RemoteInput, адаптивная разметка |
+| 5 | 2.5.0 | mDNS авто-обнаружение порта, release-подпись, unit-тесты |
 
 ### Исправления после 2.0.0 (Z)
 
 | Z | Версия | Кратко |
 |---|--------|--------|
 | 1 | 2.1.1 | Удаление Shizuku |
+| 2 | 2.5.1 | Краш при запуске: PendingIntent FLAG_MUTABLE для RemoteInput |
+| 3 | 2.5.2 | mDNS auto-discovery debug-порта (заменён на probe в 2.5.3) |
+| 4 | 2.5.3 | Probe debug-порта после pairing, mDNS fallback, UX-подсказка |
+| 5 | 2.5.4 | IPv6 loopback, улучшенный статус-бар, детальное логирование |
+| 6 | 2.5.5 | Убран mDNS из auto-discovery, уточнён kill_protected, publish-github.cmd |

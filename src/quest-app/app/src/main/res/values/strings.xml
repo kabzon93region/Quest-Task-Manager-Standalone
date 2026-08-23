@@ -53,12 +53,12 @@
     <string name="adb_error_connection_refused">Отказ в подключении — включите Wireless debugging и проверьте debug-порт</string>
     <string name="adb_error_timeout">Таймаут — код pairing мог истечь, запросите новый</string>
     <string name="adb_error_pair_failed">Сопряжение не удалось — проверьте код и порт pairing</string>
-    <string name="adb_pair_ok">Сопряжение выполнено</string>
+    <string name="adb_pair_ok">Сопряжение выполнено — введите debug-порт из Wireless debugging</string>
     <string name="adb_connect_ok">Подключено: %1$s</string>
     <string name="shell_status_adb_ok">Shell: Wireless ADB</string>
     <string name="shell_status_adb_need_connect">ADB: сопряжено, нажмите «Подключить»</string>
     <string name="shell_status_adb_reconnecting">ADB: переподключение…</string>
-    <string name="shell_status_adb_lost">ADB: соединение потеряно — проверьте debug-порт</string>
+    <string name="shell_status_adb_lost">ADB: подключение не удалось — проверьте debug-порт</string>
     <string name="shell_status_adb_debug_off">ADB: Wireless debugging выключен</string>
     <string name="shell_status_need_setup">Shell: настройте ADB во вкладке «Настройки»</string>
     <string name="terminal_input_hint">команда</string>

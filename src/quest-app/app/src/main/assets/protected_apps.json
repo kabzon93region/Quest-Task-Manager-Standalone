@@ -3,11 +3,19 @@
     "com.oculus.vrshell",
     "com.oculus.systemux",
     "com.oculus.os.vrlockscreen",
+    "com.oculus.companion.server",
+    "com.oculus.connectivity.bluetooth",
+    "com.oculus.deviceauthserver",
+    "com.oculus.externalstorage",
+    "com.oculus.maintenanceboot",
+    "com.oculus.ovrmonitormetricsservice",
     "com.meta.horizon",
     "com.meta.environment.prod.stinson.launcher"
   ],
   "protected_prefixes": [
-    "com.oculus.",
+    "com.oculus.vrshell",
+    "com.oculus.systemux",
+    "com.oculus.os.",
     "com.meta.",
     "com.android.",
     "com.google.",
@@ -21,6 +29,9 @@
     "moe.shizuku."
   ],
   "always_show_as_user": [
-    "com.adilhanney.no_more_background"
+    "com.adilhanney.no_more_background",
+    "com.oculus.hzosgallery",
+    "com.oculus.assistant",
+    "com.oculus.guardian"
   ]
 }

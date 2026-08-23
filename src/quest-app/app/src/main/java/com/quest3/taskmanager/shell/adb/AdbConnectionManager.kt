@@ -37,12 +37,36 @@ object AdbConnectionManager {
         return mutex.withLock {
             withContext(Dispatchers.IO) {
                 try {
-                    Kadb.pair(host, pairPort, code)
+                    // Try IPv6 first, then IPv4
+                    var paired = false
+                    for (h in listOf("::1", "127.0.0.1")) {
+                        try {
+                            Kadb.pair(h, pairPort, code)
+                            paired = true
+                            FileLogger.i("adb pair ok $h:$pairPort")
+                            break
+                        } catch (_: Exception) {
+                            // try next host
+                        }
+                    }
+                    if (!paired) {
+                        Kadb.pair(host, pairPort, code)
+                        FileLogger.i("adb pair ok $host:$pairPort")
+                    }
+
+                    // Try to discover debug port by probing common ports
+                    val debugPort = probeDebugPort(host, pairPort)
+                    if (debugPort != null) {
+                        FileLogger.i("debug port probed: $debugPort")
+                    } else {
+                        FileLogger.w("debug port probe failed, user must enter manually")
+                    }
+
                     AppSettings.prefs(context).edit()
                         .putBoolean(AppSettings.KEY_ADB_PAIRED, true)
+                        .putString(AppSettings.KEY_ADB_DEBUG_PORT, debugPort?.toString() ?: "")
                         .remove(AppSettings.KEY_ADB_PAIR_CODE)
                         .apply()
-                    FileLogger.i("adb pair ok $host:$pairPort")
                     Result.success(Unit)
                 } catch (e: Exception) {
                     FileLogger.e("adb pair failed", e)
@@ -52,11 +76,50 @@ object AdbConnectionManager {
         }
     }
 
+    /**
+     * After pairing, probe common ports to find adbd.
+     * Tries: pairing port, 5555, then scans nearby range.
+     */
+    private fun probeDebugPort(host: String, pairPort: Int): Int? {
+        val candidates = mutableListOf(pairPort, 5555)
+        for (offset in listOf(-2, -1, 1, 2, 3, 4, 5)) {
+            val p = pairPort + offset
+            if (p > 0 && p !in candidates) candidates.add(p)
+        }
+        val hosts = listOf("::1", "127.0.0.1")
+        for (h in hosts) {
+            for (port in candidates) {
+                try {
+                    val instance = Kadb.create(h, port)
+                    val result = instance.shell("id")
+                    val output = result.output.orEmpty()
+                    if (result.exitCode == 0 && output.contains("uid=2000")) {
+                        FileLogger.i("probe found adbd at $h:$port")
+                        instance.close()
+                        return port
+                    }
+                    instance.close()
+                } catch (_: Exception) {
+                    // not this port
+                }
+            }
+        }
+        return null
+    }
+
     suspend fun connect(context: Context, host: String, debugPort: Int): Result<String> {
         AdbKeyStore.init(context)
         return mutex.withLock {
             withContext(Dispatchers.IO) {
-                connectLocked(context, host, debugPort)
+                // Try IPv6 loopback first, then IPv4
+                val hosts = listOf("::1", "127.0.0.1")
+                var lastError: Exception? = null
+                for (h in hosts) {
+                    val result = connectLocked(context, h, debugPort)
+                    if (result.isSuccess) return@withContext result
+                    lastError = result.exceptionOrNull() as? Exception
+                }
+                Result.failure(lastError ?: Exception("connection failed"))
             }
         }
     }
@@ -116,9 +179,11 @@ object AdbConnectionManager {
     private suspend fun connectLocked(context: Context, host: String, debugPort: Int): Result<String> {
         return try {
             disconnectInternal()
+            FileLogger.i("adb connect attempt $host:$debugPort")
             val instance = Kadb.create(host, debugPort)
             val idResult = instance.shell("id")
             val output = shellText(idResult)
+            FileLogger.i("adb connect id result: exit=${idResult.exitCode} output=${output.trim()}")
             if (idResult.exitCode != 0 || !output.contains("uid=2000")) {
                 closeQuietly(instance)
                 return Result.failure(
@@ -132,7 +197,7 @@ object AdbConnectionManager {
             FileLogger.i("adb connect ok $host:$debugPort")
             Result.success(output.trim())
         } catch (e: Exception) {
-            FileLogger.e("adb connect failed", e)
+            FileLogger.e("adb connect failed $host:$debugPort", e)
             Result.failure(mapError(e))
         }
     }
